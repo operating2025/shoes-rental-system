@@ -1,0 +1,793 @@
+	<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>고등학교 공용실내화 대여 시스템</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        nav {
+            display: flex;
+            background-color: #2980b9;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        nav button {
+            flex: 1;
+            background: none;
+            border: none;
+            color: white;
+            padding: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 16px;
+        }
+        
+        nav button:hover {
+            background-color: #1c638d;
+        }
+        
+        nav button.active {
+            background-color: #1c638d;
+            font-weight: bold;
+        }
+        
+        .page {
+            display: none;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 50px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        .tab.active {
+            border-bottom: 2px solid #3498db;
+            font-weight: bold;
+        }
+        
+        .status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 14px;
+            display: inline-block;
+        }
+        
+        .status.available {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .status.rented {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .shoe-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .shoe-info {
+            flex: 1;
+        }
+        
+        .shoe-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .card h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .card .number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .success-message {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="login-page" class="login-container">
+        <h1 style="text-align: center; margin-bottom: 20px;">공용실내화 대여 시스템</h1>
+        
+        <div id="login-form">
+            <div class="form-group">
+                <label for="login-student-id">학번</label>
+                <input type="text" id="login-student-id" placeholder="학번을 입력하세요">
+            </div>
+            <div class="form-group">
+                <label for="login-name">이름</label>
+                <input type="text" id="login-name" placeholder="이름을 입력하세요">
+            </div>
+            <button onclick="login()">입장하기</button>
+        </div>
+    </div>
+    
+    <div id="main-app" style="display: none;">
+        <div class="container">
+            <header>
+                <h1>고등학교 공용실내화 대여 시스템</h1>
+                <p id="user-info">환영합니다, <span id="user-name"></span>님!</p>
+            </header>
+            
+            <nav>
+                <button id="nav-rent" onclick="changePage('rent')" class="active">실내화 대여</button>
+                <button id="nav-return" onclick="changePage('return')">실내화 반납</button>
+                <button id="nav-history" onclick="changePage('history')">대여 내역</button>
+                <button id="nav-admin" onclick="changePage('admin')" style="display: none;">관리자 모드</button>
+                <button onclick="logout()">로그아웃</button>
+            </nav>
+            
+            <!-- 실내화 대여 페이지 -->
+            <div id="rent-page" class="page active">
+                <h2>실내화 대여</h2>
+                <div id="rent-success" class="success-message">실내화가 성공적으로 대여되었습니다!</div>
+                
+                <div class="form-group">
+                    <label for="size-filter">사이즈 필터</label>
+                    <select id="size-filter" onchange="filterShoesBySize()">
+                        <option value="all">모든 사이즈</option>
+                        <option value="230">230mm</option>
+                        <option value="240">240mm</option>
+                        <option value="250">250mm</option>
+                        <option value="260">260mm</option>
+                        <option value="270">270mm</option>
+                        <option value="280">280mm</option>
+                    </select>
+                </div>
+                
+                <div id="available-shoes">
+                    <!-- 대여 가능한 실내화 목록이 여기에 표시됩니다 -->
+                </div>
+            </div>
+            
+            <!-- 실내화 반납 페이지 -->
+            <div id="return-page" class="page">
+                <h2>실내화 반납</h2>
+                <div id="return-success" class="success-message">실내화가 성공적으로 반납되었습니다!</div>
+                
+                <div id="rented-shoes">
+                    <!-- 대여 중인 실내화 목록이 여기에 표시됩니다 -->
+                </div>
+            </div>
+            
+            <!-- 대여 내역 페이지 -->
+            <div id="history-page" class="page">
+                <h2>대여 내역</h2>
+                <table id="history-table">
+                    <thead>
+                        <tr>
+                            <th>실내화 번호</th>
+                            <th>사이즈</th>
+                            <th>대여일</th>
+                            <th>반납일</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body">
+                        <!-- 대여 내역이 여기에 표시됩니다 -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 관리자 페이지 -->
+            <div id="admin-page" class="page">
+                <h2>관리자 모드</h2>
+                
+                <div class="dashboard-cards">
+                    <div class="card">
+                        <h3>총 실내화 수</h3>
+                        <div class="number" id="total-shoes">60</div>
+                    </div>
+                    <div class="card">
+                        <h3>대여 중인 실내화</h3>
+                        <div class="number" id="rented-count">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>대여 가능한 실내화</h3>
+                        <div class="number" id="available-count">60</div>
+                    </div>
+                    <div class="card">
+                        <h3>총 회원 수</h3>
+                        <div class="number" id="total-users">1</div>
+                    </div>
+                </div>
+                
+                <h3>재고 관리</h3>
+                <div class="form-group">
+                    <label for="add-shoe-id">실내화 번호</label>
+                    <input type="text" id="add-shoe-id" placeholder="실내화 번호를 입력하세요">
+                </div>
+                <div class="form-group">
+                    <label for="add-shoe-size">사이즈</label>
+                    <select id="add-shoe-size">
+                        <option value="230">230mm</option>
+                        <option value="240">240mm</option>
+                        <option value="250">250mm</option>
+                        <option value="260">260mm</option>
+                        <option value="270">270mm</option>
+                        <option value="280">280mm</option>
+                    </select>
+                </div>
+                <button onclick="addShoe()">실내화 추가</button>
+                
+                <h3 style="margin-top: 30px;">대여 현황</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>학번</th>
+                            <th>이름</th>
+                            <th>실내화 번호</th>
+                            <th>대여일</th>
+                            <th>상태</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-rental-body">
+                        <!-- 대여 현황이 여기에 표시됩니다 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 로컬 스토리지를 사용하여 데이터를 저장합니다
+        const users = JSON.parse(localStorage.getItem('users')) || [];
+        const shoes = JSON.parse(localStorage.getItem('shoes')) || [];
+        const rentals = JSON.parse(localStorage.getItem('rentals')) || [];
+        let currentUser = null;
+        
+        // 초기 데이터가 없을 경우 샘플 데이터를 생성합니다
+        if (users.length === 0) {
+            users.push({
+                name: '관리자',
+                studentId: 'admin',
+                isAdmin: true
+            });
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+        
+        if (shoes.length === 0) {
+            // 각 사이즈별로 10개씩 실내화를 생성합니다
+            const sizes = [230, 240, 250, 260, 270, 280];
+            let shoeId = 1;
+            
+            sizes.forEach(size => {
+                for (let i = 0; i < 10; i++) {
+                    shoes.push({
+                        id: shoeId.toString().padStart(3, '0'),
+                        size: size,
+                        status: 'available'
+                    });
+                    shoeId++;
+                }
+            });
+            
+            localStorage.setItem('shoes', JSON.stringify(shoes));
+        }
+        
+        // 로그인 기능
+        function login() {
+            const studentId = document.getElementById('login-student-id').value;
+            const name = document.getElementById('login-name').value;
+            
+            if (!studentId || !name) {
+                alert('학번과 이름을 모두 입력해주세요.');
+                return;
+            }
+            
+            // 관리자 계정 확인
+            if (studentId === 'admin' && name === '관리자') {
+                currentUser = {
+                    name: '관리자',
+                    studentId: 'admin',
+                    isAdmin: true
+                };
+                
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                document.getElementById('user-name').textContent = currentUser.name;
+                document.getElementById('nav-admin').style.display = 'block';
+                updateAdminDashboard();
+                
+                loadRentPage();
+                loadReturnPage();
+                loadHistoryPage();
+                return;
+            }
+            
+            // 기존 사용자 찾기
+            let user = users.find(u => u.studentId === studentId);
+            
+            // 사용자가 없으면 새로 생성
+            if (!user) {
+                user = {
+                    name: name,
+                    studentId: studentId,
+                    isAdmin: false
+                };
+                
+                users.push(user);
+                localStorage.setItem('users', JSON.stringify(users));
+            } else if (user.name !== name) {
+                // 이름이 다르면 업데이트
+                user.name = name;
+                localStorage.setItem('users', JSON.stringify(users));
+            }
+            
+            currentUser = user;
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            document.getElementById('user-name').textContent = user.name;
+            
+            loadRentPage();
+            loadReturnPage();
+            loadHistoryPage();
+        }
+        
+        // 로그아웃 기능
+        function logout() {
+            currentUser = null;
+            document.getElementById('login-page').style.display = 'block';
+            document.getElementById('main-app').style.display = 'none';
+            document.getElementById('login-student-id').value = '';
+            document.getElementById('login-name').value = '';
+        }
+        
+        // 페이지 전환 기능
+        function changePage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(`${page}-page`).classList.add('active');
+            
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById(`nav-${page}`).classList.add('active');
+            
+            // 페이지가 전환될 때 해당 페이지의 데이터를 새로 로드합니다
+            if (page === 'rent') {
+                loadRentPage();
+            } else if (page === 'return') {
+                loadReturnPage();
+            } else if (page === 'history') {
+                loadHistoryPage();
+            } else if (page === 'admin') {
+                updateAdminDashboard();
+            }
+        }
+        
+        // 실내화 대여 페이지 로드
+        function loadRentPage() {
+            const availableShoesContainer = document.getElementById('available-shoes');
+            availableShoesContainer.innerHTML = '';
+            
+            const sizeFilter = document.getElementById('size-filter').value;
+            
+            let filteredShoes = shoes.filter(shoe => shoe.status === 'available');
+            
+            if (sizeFilter !== 'all') {
+                filteredShoes = filteredShoes.filter(shoe => shoe.size === parseInt(sizeFilter));
+            }
+            
+            if (filteredShoes.length === 0) {
+                availableShoesContainer.innerHTML = '<p>현재 대여 가능한 실내화가 없습니다.</p>';
+                return;
+            }
+            
+            filteredShoes.forEach(shoe => {
+                const shoeItem = document.createElement('div');
+                shoeItem.className = 'shoe-item';
+                shoeItem.innerHTML = `
+                    <div class="shoe-info">
+                        <h3>실내화 #${shoe.id}</h3>
+                        <p>사이즈: ${shoe.size}mm</p>
+                        <span class="status available">대여 가능</span>
+                    </div>
+                    <div class="shoe-actions">
+                        <button onclick="rentShoe('${shoe.id}')">대여하기</button>
+                    </div>
+                `;
+                availableShoesContainer.appendChild(shoeItem);
+            });
+        }
+        
+        // 사이즈별 실내화 필터링
+        function filterShoesBySize() {
+            loadRentPage();
+        }
+        
+        // 실내화 대여 기능
+        function rentShoe(shoeId) {
+            const shoeIndex = shoes.findIndex(s => s.id === shoeId);
+            
+            if (shoeIndex !== -1 && shoes[shoeIndex].status === 'available') {
+                // 이미 대여 중인 실내화가 있는지 확인
+                const alreadyRented = rentals.some(r => 
+                    r.studentId === currentUser.studentId && 
+                    r.returnDate === null
+                );
+                
+                if (alreadyRented) {
+                    alert('이미 대여 중인 실내화가 있습니다. 먼저 반납해주세요.');
+                    return;
+                }
+                
+                // 실내화 상태 변경
+                shoes[shoeIndex].status = 'rented';
+                localStorage.setItem('shoes', JSON.stringify(shoes));
+                
+                // 대여 기록 추가
+                const rental = {
+                    id: Date.now().toString(),
+                    shoeId: shoeId,
+                    studentId: currentUser.studentId,
+                    studentName: currentUser.name,
+                    rentDate: new Date().toISOString(),
+                    returnDate: null
+                };
+                
+                rentals.push(rental);
+                localStorage.setItem('rentals', JSON.stringify(rentals));
+                
+                // 성공 메시지 표시
+                const successMessage = document.getElementById('rent-success');
+                successMessage.style.display = 'block';
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 3000);
+                
+                loadRentPage();
+                loadReturnPage();
+                loadHistoryPage();
+                if (currentUser.isAdmin) {
+                    updateAdminDashboard();
+                }
+            }
+        }
+        
+        // 실내화 반납 페이지 로드
+        function loadReturnPage() {
+            const rentedShoesContainer = document.getElementById('rented-shoes');
+            rentedShoesContainer.innerHTML = '';
+            
+            // 현재 사용자가 대여 중인 실내화 찾기
+            const userRentals = rentals.filter(r => 
+                r.studentId === currentUser.studentId && 
+                r.returnDate === null
+            );
+            
+            if (userRentals.length === 0) {
+                rentedShoesContainer.innerHTML = '<p>현재 대여 중인 실내화가 없습니다.</p>';
+                return;
+            }
+            
+            userRentals.forEach(rental => {
+                const shoe = shoes.find(s => s.id === rental.shoeId);
+                
+                if (shoe) {
+                    const rentDate = new Date(rental.rentDate);
+                    const formattedRentDate = `${rentDate.getFullYear()}-${(rentDate.getMonth() + 1).toString().padStart(2, '0')}-${rentDate.getDate().toString().padStart(2, '0')}`;
+                    
+                    const shoeItem = document.createElement('div');
+                    shoeItem.className = 'shoe-item';
+                    shoeItem.innerHTML = `
+                        <div class="shoe-info">
+                            <h3>실내화 #${shoe.id}</h3>
+                            <p>사이즈: ${shoe.size}mm</p>
+                            <p>대여일: ${formattedRentDate}</p>
+                            <span class="status rented">대여 중</span>
+                        </div>
+                        <div class="shoe-actions">
+                            <button onclick="returnShoe('${rental.id}', '${shoe.id}')">반납하기</button>
+                        </div>
+                    `;
+                    rentedShoesContainer.appendChild(shoeItem);
+                }
+            });
+        }
+        
+        // 실내화 반납 기능
+        function returnShoe(rentalId, shoeId) {
+            const rentalIndex = rentals.findIndex(r => r.id === rentalId);
+            const shoeIndex = shoes.findIndex(s => s.id === shoeId);
+            
+            if (rentalIndex !== -1 && shoeIndex !== -1) {
+                // 대여 기록 업데이트
+                rentals[rentalIndex].returnDate = new Date().toISOString();
+                localStorage.setItem('rentals', JSON.stringify(rentals));
+                
+                // 실내화 상태 변경
+                shoes[shoeIndex].status = 'available';
+                localStorage.setItem('shoes', JSON.stringify(shoes));
+                
+                // 성공 메시지 표시
+                const successMessage = document.getElementById('return-success');
+                successMessage.style.display = 'block';
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 3000);
+                
+                loadRentPage();
+                loadReturnPage();
+                loadHistoryPage();
+                if (currentUser.isAdmin) {
+                    updateAdminDashboard();
+                }
+            }
+        }
+        
+        // 대여 내역 페이지 로드
+        function loadHistoryPage() {
+            const historyBody = document.getElementById('history-body');
+            historyBody.innerHTML = '';
+            
+            // 현재 사용자의 모든 대여 내역 찾기
+            const userRentals = rentals.filter(r => r.studentId === currentUser.studentId);
+            
+            if (userRentals.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="5" style="text-align: center;">대여 내역이 없습니다.</td>';
+                historyBody.appendChild(row);
+                return;
+            }
+            
+            userRentals.forEach(rental => {
+                const shoe = shoes.find(s => s.id === rental.shoeId);
+                
+                if (shoe) {
+                    const rentDate = new Date(rental.rentDate);
+                    const formattedRentDate = `${rentDate.getFullYear()}-${(rentDate.getMonth() + 1).toString().padStart(2, '0')}-${rentDate.getDate().toString().padStart(2, '0')}`;
+                    
+                    let formattedReturnDate = '-';
+                    let status = '<span class="status rented">대여 중</span>';
+                    
+                    if (rental.returnDate) {
+                        const returnDate = new Date(rental.returnDate);
+                        formattedReturnDate = `${returnDate.getFullYear()}-${(returnDate.getMonth() + 1).toString().padStart(2, '0')}-${returnDate.getDate().toString().padStart(2, '0')}`;
+                        status = '<span class="status available">반납 완료</span>';
+                    }
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${shoe.id}</td>
+                        <td>${shoe.size}mm</td>
+                        <td>${formattedRentDate}</td>
+                        <td>${formattedReturnDate}</td>
+                        <td>${status}</td>
+                    `;
+                    historyBody.appendChild(row);
+                }
+            });
+        }
+        
+        // 관리자 대시보드 업데이트
+        function updateAdminDashboard() {
+            document.getElementById('total-shoes').textContent = shoes.length;
+            document.getElementById('rented-count').textContent = shoes.filter(s => s.status === 'rented').length;
+            document.getElementById('available-count').textContent = shoes.filter(s => s.status === 'available').length;
+            document.getElementById('total-users').textContent = users.length;
+            
+            const adminRentalBody = document.getElementById('admin-rental-body');
+            adminRentalBody.innerHTML = '';
+            
+            // 현재 대여 중인 모든 실내화 표시
+            const activeRentals = rentals.filter(r => r.returnDate === null);
+            
+            if (activeRentals.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="6" style="text-align: center;">현재 대여 중인 실내화가 없습니다.</td>';
+                adminRentalBody.appendChild(row);
+                return;
+            }
+            
+            activeRentals.forEach(rental => {
+                const shoe = shoes.find(s => s.id === rental.shoeId);
+                
+                if (shoe) {
+                    const rentDate = new Date(rental.rentDate);
+                    const formattedRentDate = `${rentDate.getFullYear()}-${(rentDate.getMonth() + 1).toString().padStart(2, '0')}-${rentDate.getDate().toString().padStart(2, '0')}`;
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${rental.studentId}</td>
+                        <td>${rental.studentName}</td>
+                        <td>${shoe.id} (${shoe.size}mm)</td>
+                        <td>${formattedRentDate}</td>
+                        <td><span class="status rented">대여 중</span></td>
+                        <td>
+                            <button onclick="adminForceReturn('${rental.id}', '${shoe.id}')">반납처리</button>
+                        </td>
+                    `;
+                    adminRentalBody.appendChild(row);
+                }
+            });
+        }
+        
+        // 관리자 강제 반납 기능
+        function adminForceReturn(rentalId, shoeId) {
+            const rentalIndex = rentals.findIndex(r => r.id === rentalId);
+            const shoeIndex = shoes.findIndex(s => s.id === shoeId);
+            
+            if (rentalIndex !== -1 && shoeIndex !== -1) {
+                // 대여 기록 업데이트
+                rentals[rentalIndex].returnDate = new Date().toISOString();
+                localStorage.setItem('rentals', JSON.stringify(rentals));
+                
+                // 실내화 상태 변경
+                shoes[shoeIndex].status = 'available';
+                localStorage.setItem('shoes', JSON.stringify(shoes));
+                
+                alert('반납 처리가 완료되었습니다.');
+                updateAdminDashboard();
+            }
+        }
+        
+        // 실내화 추가 기능
+        function addShoe() {
+            const shoeId = document.getElementById('add-shoe-id').value;
+            const shoeSize = parseInt(document.getElementById('add-shoe-size').value);
+            
+            if (!shoeId) {
+                alert('실내화 번호를 입력해주세요.');
+                return;
+            }
+            
+            if (shoes.some(s => s.id === shoeId)) {
+                alert('이미 등록된 실내화 번호입니다.');
+                return;
+            }
+            
+            shoes.push({
+                id: shoeId,
+                size: shoeSize,
+                status: 'available'
+            });
+            
+          localStorage.setItem('shoes', JSON.stringify(shoes));
+            
+            alert('실내화가 추가되었습니다.');
+            document.getElementById('add-shoe-id').value = '';
+            updateAdminDashboard();
+        }
+    </script>
+</body>
+</html>
