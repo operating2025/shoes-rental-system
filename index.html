@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>실내화 대여 시스템</title>
+  <style>
+    body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 20px; background: #f9f9f9; }
+    .hidden { display: none; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+    .item { background: white; padding: 20px; text-align: center; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .available { color: green; font-weight: bold; }
+    .rented { color: red; font-weight: bold; }
+    button { margin: 5px; padding: 8px 12px; cursor: pointer; }
+    nav { margin-bottom: 20px; }
+    nav button.active { font-weight: bold; background-color: #3498db; color: white; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #eee; }
+  </style>
+</head>
+<body>
+
+  <div id="login-page">
+    <h2>실내화 대여 시스템</h2>
+    <input type="text" id="student-id" placeholder="학번" />
+    <input type="text" id="student-name" placeholder="이름" />
+    <button onclick="login()">로그인</button>
+  </div>
+
+  <div id="main-app" class="hidden">
+    <nav>
+      <button onclick="showPage('rent')" class="active">대여</button>
+      <button onclick="showPage('return')">반납</button>
+      <button onclick="showPage('admin')" id="admin-tab" class="hidden">관리자 내역</button>
+      <button onclick="showPage('logs')" id="log-tab" class="hidden">대여/반납 로그</button>
+      <button onclick="logout()">로그아웃</button>
+    </nav>
+
+    <div id="rent" class="page active">
+      <h2>실내화 대여</h2>
+      <div class="grid" id="shoe-grid"></div>
+    </div>
+
+    <div id="return" class="page">
+      <h2>실내화 반납</h2>
+      <div id="my-rental"></div>
+    </div>
+
+    <div id="admin" class="page">
+      <h2>전체 실내화 대여 내역</h2>
+      <table>
+        <thead>
+          <tr><th>번호</th><th>상태</th><th>대여자 학번</th></tr>
+        </thead>
+        <tbody id="admin-table"></tbody>
+      </table>
+    </div>
+
+    <div id="logs" class="page">
+      <h2>대여 및 반납 로그</h2>
+      <table>
+        <thead>
+          <tr><th>시간</th><th>학번</th><th>이름</th><th>실내화 번호</th><th>동작</th></tr>
+        </thead>
+        <tbody id="log-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const shoes = JSON.parse(localStorage.getItem('shoes')) || Array.from({length: 15}, (_, i) => ({ id: i + 1, rentedBy: null }));
+    const logs = JSON.parse(localStorage.getItem('logs')) || [];
+    localStorage.setItem('shoes', JSON.stringify(shoes));
+    let currentUser = null;
+
+    function login() {
+      const id = document.getElementById('student-id').value.trim();
+      const name = document.getElementById('student-name').value.trim();
+      if (!id || !name) return alert('학번과 이름을 입력해주세요.');
+
+      currentUser = { id, name };
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
+      document.getElementById('login-page').classList.add('hidden');
+      document.getElementById('main-app').classList.remove('hidden');
+
+      if (id === 'admin' && name === '관리자') {
+        document.getElementById('admin-tab').classList.remove('hidden');
+        document.getElementById('log-tab').classList.remove('hidden');
+        showPage('admin');
+        renderAdmin();
+        renderLogs();
+      } else {
+        renderGrid();
+        renderMyRental();
+        showPage('rent');
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      localStorage.removeItem('currentUser');
+      location.reload();
+    }
+
+    function showPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(page).classList.add('active');
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('shoe-grid');
+      grid.innerHTML = '';
+      shoes.forEach(shoe => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `<h3>${shoe.id}번</h3>` +
+          `<p class="${shoe.rentedBy ? 'rented' : 'available'}">${shoe.rentedBy ? '대여 중' : '대여 가능'}</p>` +
+          (!shoe.rentedBy ? `<button onclick="rent(${shoe.id})">대여</button>` : '');
+        grid.appendChild(div);
+      });
+      localStorage.setItem('shoes', JSON.stringify(shoes));
+    }
+
+    function renderMyRental() {
+      const rental = shoes.find(s => s.rentedBy === currentUser.id);
+      const div = document.getElementById('my-rental');
+      div.innerHTML = rental ? `
+        <div class="item">
+          <h3>${rental.id}번</h3>
+          <p class="rented">대여 중</p>
+          <button onclick="returnShoe(${rental.id})">반납</button>
+        </div>` : '<p>대여 중인 실내화 없음</p>';
+    }
+
+    function rent(id) {
+      if (shoes.some(s => s.rentedBy === currentUser.id)) {
+        alert('이미 대여 중인 실내화가 있습니다.');
+        return;
+      }
+      const shoe = shoes.find(s => s.id === id);
+      shoe.rentedBy = currentUser.id;
+      localStorage.setItem('shoes', JSON.stringify(shoes));
+      logs.push({ time: new Date().toLocaleString(), id: currentUser.id, name: currentUser.name, shoeId: id, action: '대여' });
+      localStorage.setItem('logs', JSON.stringify(logs));
+      renderGrid();
+      renderMyRental();
+    }
+
+    function returnShoe(id) {
+      const shoe = shoes.find(s => s.id === id);
+      shoe.rentedBy = null;
+      localStorage.setItem('shoes', JSON.stringify(shoes));
+      logs.push({ time: new Date().toLocaleString(), id: currentUser.id, name: currentUser.name, shoeId: id, action: '반납' });
+      localStorage.setItem('logs', JSON.stringify(logs));
+      renderGrid();
+      renderMyRental();
+    }
+
+    function renderAdmin() {
+      const tbody = document.getElementById('admin-table');
+      tbody.innerHTML = '';
+      shoes.forEach(shoe => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${shoe.id}</td>
+          <td>${shoe.rentedBy ? '대여 중' : '대여 가능'}</td>
+          <td>${shoe.rentedBy || '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderLogs() {
+      const tbody = document.getElementById('log-table');
+      tbody.innerHTML = '';
+      logs.slice().reverse().forEach(log => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${log.time}</td>
+          <td>${log.id}</td>
+          <td>${log.name}</td>
+          <td>${log.shoeId}</td>
+          <td>${log.action}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+  </script>
+
+</body>
+</html>
